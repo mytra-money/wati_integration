@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import today, getdate, cint, now, add_days, parse_val, cstr,nowdate
 from frappe.utils.safe_exec import get_safe_globals
 from frappe import _
-from urllib.parse import urlencode
+from urllib.parse import quote
 
 
 class WatiMessageRule(Document):
@@ -135,33 +135,78 @@ def send_message_using_template(self,rule):
 		})
 	send_whatsapp_message(rule.message_template,self.get(rule.mobile_no_field),json.dumps(data),self.name,self.doctype)
 
-def send_whatsapp_message(template,mobile,data,document,doctype):
-	wati_setting = frappe.get_doc("Wati Setting","Wati Setting")
-	if not wati_setting.url or not wati_setting.get('whatsapp_number') or not wati_setting.get('token'):
+def send_whatsapp_message(template, mobile, data, document, doctype, show_alert=True):
+	wati_setting = frappe.get_doc("Wati Setting", "Wati Setting")
+	if not wati_setting.url or not wati_setting.get("whatsapp_number") or not wati_setting.get("token"):
 		frappe.throw(_("Url,Whatsapp Number And Token Mandatory in wati setting for send whatsapp message"))
-	base_url = f"{wati_setting.get('url')} /api/v1/sendTemplateMessage/{mobile}?whatsappNumber={wati_setting.get('whatsapp_number')}"
-	base_url = wati_setting.get('url') + "/api/v1/sendTemplateMessage/" + mobile + "?whatsappNumber=" + wati_setting.get('whatsapp_number')
+
+	if isinstance(data, str):
+		try:
+			parameters = json.loads(data)
+		except ValueError:
+			parameters = data
+	else:
+		parameters = data
+
+	# WATI expects country code digits; strip leading +
+	mobile = str(mobile or "").strip().replace(" ", "").replace("-", "").replace("+", "")
+	# v1 path-style URL returns 400 on this tenant; v2 uses recipient in query param
+	base_url = (
+		wati_setting.get("url").rstrip("/")
+		+ "/api/v2/sendTemplateMessage?whatsappNumber="
+		+ quote(mobile, safe="")
+	)
 	payload = json.dumps({
-	"template_name": template,
-	"broadcast_name": template,
-	"parameters": data
+		"template_name": template,
+		"broadcast_name": template,
+		"parameters": parameters,
 	})
 	headers = {
-	'Authorization': 'Bearer ' + wati_setting.get("token"),
-	'Content-Type': 'application/json',
-	'Cookie': 'affinity=1640466569.646.162034.484452'
+		"Authorization": "Bearer " + wati_setting.get("token"),
+		"Content-Type": "application/json",
 	}
-	response = requests.request("POST", base_url, data=payload, headers=headers)
-	frappe.get_doc(dict(
-		doctype = "Wati Message Log",
-		mobile_no = mobile,
-		url = base_url,
-		payload = payload,
-		headers = json.dumps(headers),
-		status_code = response.status_code,
-		response = response.text,
-		document = document,
-		ref_doctype = doctype
 
-	)).insert(ignore_permissions = True)
-	frappe.msgprint(_('Whatsapp Message sent on {0}').format(mobile), alert=True, indicator='green')
+	def _write_log(status, response_body):
+		frappe.get_doc(dict(
+			doctype="Wati Message Log",
+			mobile_no=mobile,
+			url=base_url,
+			payload=payload,
+			headers=json.dumps(headers),
+			status_code=status,
+			response=response_body,
+			document=document,
+			ref_doctype=doctype,
+		)).insert(ignore_permissions=True)
+		# Persist log even when we throw afterward
+		frappe.db.commit()
+
+	# (connect timeout, read timeout) — avoid indefinite hang when WATI is unreachable
+	status_code = None
+	response_text = ""
+	try:
+		response = requests.request(
+			"POST", base_url, data=payload, headers=headers, timeout=(5, 30)
+		)
+		status_code = response.status_code
+		response_text = response.text
+	except requests.exceptions.RequestException as e:
+		response_text = f"{type(e).__name__}: {e}"
+		_write_log("ERR", response_text)
+		frappe.throw(
+			_("Could not reach WATI API ({0}). Check network/URL/token in Wati Setting.").format(
+				type(e).__name__
+			)
+		)
+
+	_write_log(status_code, response_text)
+
+	if status_code and int(status_code) >= 400:
+		frappe.throw(
+			_("WATI send failed ({0}): {1}").format(status_code, (response_text or _("empty response"))[:300])
+		)
+
+	if show_alert:
+		frappe.msgprint(_("Whatsapp Message sent on {0}").format(mobile), alert=True, indicator="green")
+
+	return response

@@ -2,24 +2,21 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe
 import re
-from frappe.model.document import Document
+
+import frappe
 from frappe import _
+from frappe.model.document import Document
+
 
 class MessageTemplate(Document):
 	def validate(self):
-		try:
-			template_message = self.template_message.format()
-		except Exception as e:
-			frappe.throw(_("Invalid Message Format"))
-		res = re.findall(r'\{.*?\}', template_message)
-		# self.template_variable = []
-		self.template_variables = ""
-		for variable in res:
-			if not self.template_variables == "":
-				self.template_variables += ","
-			variable = variable.replace('{','')
-			variable = variable.replace('}','')
-			self.template_variables += f"{variable}"
-		self.template_variables = self.template_variables
+		if self.flags.from_wati_sync:
+			return
+
+		if not self.template_message:
+			return
+
+		# Derive comma-separated variable names from {var} / {{var}} placeholders
+		res = re.findall(r"\{\{?\s*([^{}]+?)\s*\}?\}", self.template_message)
+		self.template_variables = ",".join(dict.fromkeys(res)) if res else ""
