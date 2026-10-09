@@ -8,6 +8,9 @@
  "engine": "InnoDB",
  "field_order": [
   "template_name",
+  "header_type",
+  "column_break_header",
+  "header_document_variable",
   "section_break_2",
   "template_message",
   "column_break_4",
@@ -19,6 +22,24 @@
    "fieldtype": "Data",
    "label": "Template Name",
    "unique": 1
+  },
+  {
+   "fieldname": "header_type",
+   "fieldtype": "Select",
+   "label": "Header Type",
+   "options": "\nNone\nText\nImage\nVideo\nDocument",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.header_type == \"Document\" || doc.header_type == \"Image\" || doc.header_type == \"Video\"",
+   "fieldname": "header_document_variable",
+   "fieldtype": "Data",
+   "label": "Header Document Variable",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_2",
@@ -42,7 +63,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-07-05 20:15:59.194556",
+ "modified": "2026-10-08 12:45:00.000000",
  "modified_by": "Administrator",
  "module": "Wati Integration",
  "name": "Message Template",

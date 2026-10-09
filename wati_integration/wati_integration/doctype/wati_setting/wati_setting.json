@@ -9,7 +9,11 @@
   "url",
   "column_break_2",
   "whatsapp_number",
-  "token"
+  "token",
+  "templates_section",
+  "default_proforma_invoice_template",
+  "column_break_templates",
+  "default_payment_link_template"
  ],
  "fields": [
   {
@@ -30,12 +34,33 @@
    "fieldname": "token",
    "fieldtype": "Small Text",
    "label": "Token"
+  },
+  {
+   "fieldname": "templates_section",
+   "fieldtype": "Section Break",
+   "label": "Default Templates"
+  },
+  {
+   "fieldname": "default_proforma_invoice_template",
+   "fieldtype": "Link",
+   "label": "Default Proforma Invoice Template",
+   "options": "Message Template"
+  },
+  {
+   "fieldname": "column_break_templates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_payment_link_template",
+   "fieldtype": "Link",
+   "label": "Default Payment Link Template",
+   "options": "Message Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-07-07 02:07:20.706940",
+ "modified": "2026-10-08 12:45:00.000000",
  "modified_by": "Administrator",
  "module": "Wati Integration",
  "name": "Wati Setting",
