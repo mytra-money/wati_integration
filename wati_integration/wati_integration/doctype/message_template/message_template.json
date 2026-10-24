@@ -1,12 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:template_name",
+ "autoname": "format:{wati_setting}-{template_name}",
  "creation": "2022-07-05 20:06:09.398854",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "wati_setting",
   "template_name",
   "header_type",
   "column_break_header",
@@ -18,10 +19,20 @@
  ],
  "fields": [
   {
+   "fieldname": "wati_setting",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Wati Setting",
+   "options": "Wati Setting",
+   "reqd": 1
+  },
+  {
    "fieldname": "template_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Template Name",
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "header_type",
@@ -63,10 +74,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-08 12:45:00.000000",
+ "modified": "2026-10-12 12:50:00.000000",
  "modified_by": "Administrator",
  "module": "Wati Integration",
  "name": "Message Template",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

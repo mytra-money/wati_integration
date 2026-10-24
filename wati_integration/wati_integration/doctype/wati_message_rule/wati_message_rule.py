@@ -125,20 +125,35 @@ def evalute_message_rule(self, based_on, rules):
         else:
             send_message_using_template(self,rule)
 
-def send_message_using_template(self,rule):
-	rule = frappe.get_doc("Wati Message Rule",rule.name)
+def send_message_using_template(self, rule):
+	rule = frappe.get_doc("Wati Message Rule", rule.name)
+	template_doc = frappe.get_doc("Message Template", rule.message_template)
+	api_template_name = template_doc.template_name
+	wati_setting = rule.wati_setting or template_doc.wati_setting
 	data = []
 	for field in rule.template_variable:
 		data.append({
-			'name': field.get('template_variable'),
-			'value': self.get(field.get('document_variable'))
+			"name": field.get("template_variable"),
+			"value": self.get(field.get("document_variable")),
 		})
-	send_whatsapp_message(rule.message_template,self.get(rule.mobile_no_field),json.dumps(data),self.name,self.doctype)
+	send_whatsapp_message(
+		api_template_name,
+		self.get(rule.mobile_no_field),
+		json.dumps(data),
+		self.name,
+		self.doctype,
+		wati_setting=wati_setting,
+	)
 
-def send_whatsapp_message(template, mobile, data, document, doctype, show_alert=True):
-	wati_setting = frappe.get_doc("Wati Setting", "Wati Setting")
-	if not wati_setting.url or not wati_setting.get("whatsapp_number") or not wati_setting.get("token"):
-		frappe.throw(_("Url,Whatsapp Number And Token Mandatory in wati setting for send whatsapp message"))
+
+def send_whatsapp_message(
+	template, mobile, data, document, doctype, show_alert=True, wati_setting=None
+):
+	from wati_integration.utils import get_wati_setting, validate_wati_setting_credentials
+
+	# Explicit account, else Wati Setting marked Default Wati Account.
+	settings = get_wati_setting(wati_setting)
+	validate_wati_setting_credentials(settings)
 
 	if isinstance(data, str):
 		try:
@@ -152,7 +167,7 @@ def send_whatsapp_message(template, mobile, data, document, doctype, show_alert=
 	mobile = str(mobile or "").strip().replace(" ", "").replace("-", "").replace("+", "")
 	# v1 path-style URL returns 400 on this tenant; v2 uses recipient in query param
 	base_url = (
-		wati_setting.get("url").rstrip("/")
+		settings.get("url").rstrip("/")
 		+ "/api/v2/sendTemplateMessage?whatsappNumber="
 		+ quote(mobile, safe="")
 	)
@@ -162,7 +177,7 @@ def send_whatsapp_message(template, mobile, data, document, doctype, show_alert=
 		"parameters": parameters,
 	})
 	headers = {
-		"Authorization": "Bearer " + wati_setting.get("token"),
+		"Authorization": "Bearer " + settings.get("token"),
 		"Content-Type": "application/json",
 	}
 
@@ -177,6 +192,7 @@ def send_whatsapp_message(template, mobile, data, document, doctype, show_alert=
 			response=response_body,
 			document=document,
 			ref_doctype=doctype,
+			wati_setting=settings.name,
 		)).insert(ignore_permissions=True)
 		# Persist log even when we throw afterward
 		frappe.db.commit()

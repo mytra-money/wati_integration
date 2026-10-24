@@ -8,10 +8,16 @@ import requests
 from frappe import _
 
 
-def _get_wati_settings():
-	settings = frappe.get_single("Wati Setting")
+def _get_wati_settings(wati_setting):
+	if not wati_setting:
+		frappe.throw(_("Please select a Wati Setting to sync templates"))
+	settings = frappe.get_doc("Wati Setting", wati_setting)
 	if not settings.url or not settings.token:
-		frappe.throw(_("URL and Token are mandatory in Wati Setting"))
+		frappe.throw(
+			_("URL and Token are mandatory in Wati Setting {0}").format(
+				frappe.bold(settings.name)
+			)
+		)
 	return settings
 
 
@@ -118,7 +124,11 @@ def _body_variable_names(body, custom_params):
 	return names
 
 
-def _upsert_message_template(template):
+def _template_doc_name(wati_setting, element_name):
+	return f"{wati_setting}-{element_name}"
+
+
+def _upsert_message_template(template, wati_setting):
 	element_name = template.get("elementName") or template.get("name")
 	if not element_name:
 		return None
@@ -145,33 +155,44 @@ def _upsert_message_template(template):
 		"template_variables": ",".join(variables),
 		"header_type": header_type if header_type in ("None", "Text", "Image", "Video", "Document") else "None",
 		"header_document_variable": header_var if header_type in ("Document", "Image", "Video") else "",
+		"wati_setting": wati_setting,
 	}
 
-	if frappe.db.exists("Message Template", element_name):
-		doc = frappe.get_doc("Message Template", element_name)
+	doc_name = _template_doc_name(wati_setting, element_name)
+	existing = frappe.db.exists("Message Template", doc_name)
+	if not existing:
+		# also match by account + template_name for legacy rows mid-migration
+		existing = frappe.db.exists(
+			"Message Template",
+			{"wati_setting": wati_setting, "template_name": element_name},
+		)
+
+	if existing:
+		doc = frappe.get_doc("Message Template", existing)
 		doc.flags.from_wati_sync = True
 		doc.update(values)
 		doc.save(ignore_permissions=True)
-	else:
-		doc = frappe.get_doc(
-			{
-				"doctype": "Message Template",
-				"template_name": element_name,
-				**values,
-			}
-		)
-		doc.flags.from_wati_sync = True
-		doc.insert(ignore_permissions=True)
+		return doc.name
 
-	return element_name
+	doc = frappe.get_doc(
+		{
+			"doctype": "Message Template",
+			"template_name": element_name,
+			**values,
+		}
+	)
+	doc.flags.from_wati_sync = True
+	doc.insert(ignore_permissions=True)
+	return doc.name
 
 
 @frappe.whitelist()
-def sync_message_templates():
+def sync_message_templates(wati_setting=None):
 	"""Fetch templates from WATI getMessageTemplates and upsert Message Template rows."""
-	settings = _get_wati_settings()
+	settings = _get_wati_settings(wati_setting)
 	base_url = _normalize_base_url(settings.url)
 	headers = _wati_headers(settings.token)
+	account_name = settings.name
 
 	page_number = 1
 	page_size = 100
@@ -200,7 +221,7 @@ def sync_message_templates():
 
 		for template in templates:
 			try:
-				name = _upsert_message_template(template)
+				name = _upsert_message_template(template, account_name)
 				if name:
 					synced.append(name)
 			except Exception:
@@ -225,7 +246,7 @@ def sync_message_templates():
 			break
 
 	frappe.db.commit()
-	msg = _("Synced {0} template(s) from WATI").format(len(synced))
+	msg = _("Synced {0} template(s) from WATI ({1})").format(len(synced), account_name)
 	if errors:
 		msg += ". " + _("Failed: {0}").format(", ".join(errors[:10]))
-	return {"synced": synced, "failed": errors, "message": msg}
+	return {"synced": synced, "failed": errors, "message": msg, "wati_setting": account_name}

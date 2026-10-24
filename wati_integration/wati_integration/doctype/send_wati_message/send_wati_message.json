@@ -12,6 +12,7 @@
   "when_to_send",
   "schedule_date_and_time",
   "sent",
+  "wati_setting",
   "section_break_4",
   "group",
   "message_details_section",
@@ -41,6 +42,16 @@
    "label": "When To Send",
    "options": "\nNow\nSchedule",
    "reqd": 1
+  },
+  {
+   "fetch_from": "message_template.wati_setting",
+   "fetch_if_empty": 1,
+   "fieldname": "wati_setting",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Wati Setting",
+   "options": "Wati Setting"
   },
   {
    "fieldname": "section_break_4",

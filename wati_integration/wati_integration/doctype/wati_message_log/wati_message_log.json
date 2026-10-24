@@ -12,6 +12,7 @@
   "document",
   "column_break_4",
   "ref_doctype",
+  "wati_setting",
   "request_data_section",
   "column_break_7",
   "url",
@@ -48,6 +49,15 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Doctype"
+  },
+  {
+   "fieldname": "wati_setting",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Wati Setting",
+   "options": "Wati Setting",
+   "read_only": 1
   },
   {
    "fieldname": "request_data_section",

@@ -67,47 +67,100 @@ def send_message(doc):
 	if doc.message_send_to == "Group":
 		send_message_group(doc)
 	
+def _resolve_send_args(doc):
+	"""Return (api_template_name, wati_setting) for Send Wati Message."""
+	template_doc = frappe.get_doc("Message Template", doc.message_template)
+	wati_setting = doc.get("wati_setting") or template_doc.wati_setting
+	return template_doc.template_name, wati_setting
+
+
 def send_message_supplier(doc):
-	suppliers_detail = frappe.get_all("Supplier",filters={"disabled":0},fields=["name","mobile_no"])
+	api_template_name, wati_setting = _resolve_send_args(doc)
+	suppliers_detail = frappe.get_all("Supplier", filters={"disabled": 0}, fields=["name", "mobile_no"])
 	for row in suppliers_detail:
 		message_template_data = get_template_data(doc)
-		if row.get('mobile_no'):
-			send_whatsapp_message(doc.message_template, row.get('mobile_no'), message_template_data, doc.name,doc.doctype)
+		if row.get("mobile_no"):
+			send_whatsapp_message(
+				api_template_name,
+				row.get("mobile_no"),
+				message_template_data,
+				doc.name,
+				doc.doctype,
+				wati_setting=wati_setting,
+			)
+
 
 def send_message_employee(doc):
-	employees_detail = frappe.get_all("Employee",filters={"status":'Active'},fields=["name","cell_number as 'mobile_no'"])
+	api_template_name, wati_setting = _resolve_send_args(doc)
+	employees_detail = frappe.get_all(
+		"Employee", filters={"status": "Active"}, fields=["name", "cell_number as 'mobile_no'"]
+	)
 	for row in employees_detail:
 		message_template_data = get_template_data(doc)
-		if row.get('mobile_no'):
-			send_whatsapp_message(doc.message_template, row.get('mobile_no'), message_template_data, doc.name,doc.doctype)
+		if row.get("mobile_no"):
+			send_whatsapp_message(
+				api_template_name,
+				row.get("mobile_no"),
+				message_template_data,
+				doc.name,
+				doc.doctype,
+				wati_setting=wati_setting,
+			)
+
 
 def send_message_customer(doc):
-	customer_details = frappe.get_all("Customer",filters={"disabled":0},fields=["name","mobile_no"])
+	api_template_name, wati_setting = _resolve_send_args(doc)
+	customer_details = frappe.get_all("Customer", filters={"disabled": 0}, fields=["name", "mobile_no"])
 	for row in customer_details:
 		message_template_data = get_template_data(doc)
-		if row.get('mobile_no'):
-			send_whatsapp_message(doc.message_template, row.get('mobile_no'), message_template_data, doc.name,doc.doctype)
+		if row.get("mobile_no"):
+			send_whatsapp_message(
+				api_template_name,
+				row.get("mobile_no"),
+				message_template_data,
+				doc.name,
+				doc.doctype,
+				wati_setting=wati_setting,
+			)
+
 
 def send_message_lead(doc):
-	lead_details = frappe.get_all("Lead",filters={},fields=["name","mobile_no"])
+	api_template_name, wati_setting = _resolve_send_args(doc)
+	lead_details = frappe.get_all("Lead", filters={}, fields=["name", "mobile_no"])
 	for row in lead_details:
 		message_template_data = get_template_data(doc)
-		if row.get('mobile_no'):
-			send_whatsapp_message(doc.message_template, row.get('mobile_no'), message_template_data, doc.name,doc.doctype)
+		if row.get("mobile_no"):
+			send_whatsapp_message(
+				api_template_name,
+				row.get("mobile_no"),
+				message_template_data,
+				doc.name,
+				doc.doctype,
+				wati_setting=wati_setting,
+			)
+
 
 def send_message_group(doc):
-	group_doc = frappe.get_doc("Wati Group",doc.group)
+	api_template_name, wati_setting = _resolve_send_args(doc)
+	group_doc = frappe.get_doc("Wati Group", doc.group)
 	message_template_data = get_template_data(doc)
 	for row in group_doc.wati_group_details:
-		if row.enable and row.get('mobile_no'):
-			send_whatsapp_message(doc.message_template,row.get('mobile_no'), message_template_data, doc.name,doc.doctype)
+		if row.enable and row.get("mobile_no"):
+			send_whatsapp_message(
+				api_template_name,
+				row.get("mobile_no"),
+				message_template_data,
+				doc.name,
+				doc.doctype,
+				wati_setting=wati_setting,
+			)
 
 
 def get_template_data(doc):
 	data = []
 	for field in doc.send_message_variables:
 		data.append({
-			'name': field.get('template_variable'),
-			'value': field.get('value')
+			"name": field.get("template_variable"),
+			"value": field.get("value"),
 		})
 	return json.dumps(data)

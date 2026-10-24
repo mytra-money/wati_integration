@@ -10,6 +10,7 @@
   "name1",
   "column_break_2",
   "enable",
+  "wati_setting",
   "section_break_4",
   "ref_doctype",
   "mobile_no_field",
@@ -41,6 +42,16 @@
    "fieldname": "enable",
    "fieldtype": "Check",
    "label": "Enable"
+  },
+  {
+   "fetch_from": "message_template.wati_setting",
+   "fetch_if_empty": 1,
+   "fieldname": "wati_setting",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Wati Setting",
+   "options": "Wati Setting"
   },
   {
    "fieldname": "section_break_4",

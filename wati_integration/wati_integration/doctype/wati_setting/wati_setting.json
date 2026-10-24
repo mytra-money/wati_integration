@@ -1,82 +1,92 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:account_name",
  "creation": "2022-07-05 19:59:28.670116",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "account_name",
+  "enabled",
+  "default_wati_account",
+  "column_break_account",
   "url",
-  "column_break_2",
   "whatsapp_number",
-  "token",
-  "templates_section",
-  "default_proforma_invoice_template",
-  "column_break_templates",
-  "default_payment_link_template"
+  "token"
  ],
  "fields": [
   {
-   "fieldname": "url",
+   "fieldname": "account_name",
    "fieldtype": "Data",
-   "label": "URL"
+   "in_list_view": 1,
+   "label": "Account Name",
+   "reqd": 1,
+   "unique": 1
   },
   {
-   "fieldname": "column_break_2",
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "default": "0",
+   "description": "When checked, this account is used as the default Wati Setting when no account is specified. Only one account should be marked as default.",
+   "fieldname": "default_wati_account",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default Wati Account"
+  },
+  {
+   "fieldname": "column_break_account",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "URL",
+   "reqd": 1
   },
   {
    "fieldname": "whatsapp_number",
    "fieldtype": "Data",
-   "label": "Whatsapp Number"
+   "label": "Whatsapp Number",
+   "reqd": 1
   },
   {
    "fieldname": "token",
    "fieldtype": "Small Text",
-   "label": "Token"
-  },
-  {
-   "fieldname": "templates_section",
-   "fieldtype": "Section Break",
-   "label": "Default Templates"
-  },
-  {
-   "fieldname": "default_proforma_invoice_template",
-   "fieldtype": "Link",
-   "label": "Default Proforma Invoice Template",
-   "options": "Message Template"
-  },
-  {
-   "fieldname": "column_break_templates",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "default_payment_link_template",
-   "fieldtype": "Link",
-   "label": "Default Payment Link Template",
-   "options": "Message Template"
+   "label": "Token",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
- "issingle": 1,
+ "issingle": 0,
  "links": [],
- "modified": "2026-10-08 12:45:00.000000",
+ "modified": "2026-10-22 16:05:00.000000",
  "modified_by": "Administrator",
  "module": "Wati Integration",
  "name": "Wati Setting",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
    "email": 1,
+   "export": 1,
    "print": 1,
    "read": 1,
+   "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1
   }
  ],
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "track_changes": 1
 }
